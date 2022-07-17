@@ -253,7 +253,7 @@ void RFIDCommunication(int communication_failed, TCPSocket *sock)
     receiveResponseFromServer(sock, 25, 1);
   }
 }
-
+//
 int askForPublicKey(TCPSocket *socket)
 {
 
