@@ -6,18 +6,12 @@ import sqlite3
 import sys
 import traceback
 
-import Crypto
+
+
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto import Random
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import AES
-from Crypto import Random
-import rsa
-import numpy as np
-
-
-
+from Crypto.Cipher import PKCS1_v1_5
 
 def search_for_pair_in_database(device_id,card_id):
     # connect with database
@@ -55,6 +49,8 @@ def search_for_device_id_in_database(device_id):
                 return "Device id is known."
 
 
+
+
 def main():
     CONNECTION_LIST = []  # list of socket clients
     RECV_BUFFER = 4096  # Advisable to keep it as an exponent of 2
@@ -73,14 +69,32 @@ def main():
 
 
     #RSA KEYS
-    #link: https://www.geeksforgeeks.org/how-to-encrypt-and-decrypt-strings-in-python/
+    new_key = RSA.generate(1024)
 
-    key = RSA.generate(1024)
+    private_key = new_key.exportKey("PEM")
+    public_key = new_key.publickey().exportKey("PEM")
+    print(type(public_key))
+    print(len(public_key))
+    print(public_key)
+
+    fd = open("private_key.pem", "wb")
+    fd.write(private_key)
+    fd.close()
+
+    fd = open("public_key.pem", "wb")
+    fd.write(public_key)
+    fd.close()
+    """
+    random_generator = Random.new().read
+    key= RSA.generate(1024, random_generator)
     public = key.publickey().exportKey("DER")
+    public2 = key.publickey().exportKey("PEM")
+    print(len(public2))
+    print(public2)
     print(len(public))
     print(public)
     print(public.hex())
-    #decMessage = rsa.decrypt(encMessage, privateKey).decode()
+    """
 
     while 1:
         # Get the list sockets which are ready to be read through select
@@ -103,14 +117,33 @@ def main():
                     # a "Connection reset by peer" exception will be thrown
                     data = sock.recv(RECV_BUFFER)
                     print("len of data:", len(data))
+                    print(type(data))
+                    print(data)
                     dataAsHex=data.hex()
+                    print(type(dataAsHex))
                     access_message=""
                     #print("data as hex:", dataAsHex)
                     if (data[0:1].decode("utf-8") == "!"):
                         print("message is:", data.decode("utf-8"))
                         #sockfd.send(public[26:247])
-                        sockfd.send(public)
-
+                        sockfd.send(public_key)
+                    elif (data[0:1].decode("utf-8") == "^"):
+                        print("------------------------------------------------------------")
+                        print("Encrypted AES key", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
+                        print("kommeno:",data[1:len(data)])
+                        print(len(data[1:len(data)]))
+                        print(type(data))
+                        print(data.hex())
+                        key = RSA.import_key(open('private_key.pem').read())
+                        sentinel = Random.new().read(128)  # data length is 256
+                        cipher = PKCS1_v1_5.new(key)
+                        messagereceived = cipher.decrypt(data[1:len(data)], sentinel)
+                        print(".......................")
+                        print("decrypted message:",messagereceived)
+                        print("hex decrypted message:", messagereceived.hex())
+                        print(len(messagereceived))
+                        print(type(messagereceived))
+                        print("------------------------------------------------------------")
                     elif(data[0:1].decode("utf-8")=="#"):
                         print("Data device:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         device_id=dataAsHex[2:len(dataAsHex)]

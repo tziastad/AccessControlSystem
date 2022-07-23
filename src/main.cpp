@@ -122,6 +122,7 @@ int sendMessageToServer(TCPSocket *socket, struct message msg)
   char dev_type[] = "#";
   char card_type[] = "@";
   char hello_msg_type[] = "!";
+  char encrypted_aes_type[]="^";
   // Send the unique id of the RFID card to server
   int sent_bytes = (*socket).send(msg.payload, msg.length);
   printf("sent bytes are: %d \n", sent_bytes);
@@ -138,6 +139,12 @@ int sendMessageToServer(TCPSocket *socket, struct message msg)
   else if (msg.type == hello_msg_type[0])
   {
     printf("client sends:%s", msg.payload);
+    printf("\n\r");
+  }
+  else if (msg.type == encrypted_aes_type[0])
+  {
+    printf("encrypted aes key: ");
+    print_id(msg.payload, msg.length);
     printf("\n\r");
   }
   return sent_bytes;
@@ -270,7 +277,7 @@ int askForPublicKey(TCPSocket *socket)
   return communication_failed;
 }
 
-void generateAndEncryptAesKey(unsigned char aes_key[], char public_key[],size_t public_key_len,size_t aes_key_len, unsigned char ecryptedAesKey[])
+void generateAndEncryptAesKey(unsigned char aes_key[], char public_key[],size_t public_key_len,size_t aes_key_len,char ecryptedAesKey[])
 {
   mbedtls_ctr_drbg_context ctr_drbg;
   mbedtls_entropy_context entropy;
@@ -332,6 +339,7 @@ void generateAndEncryptAesKey(unsigned char aes_key[], char public_key[],size_t 
     printf(" failed\n  ! mbedtls_pk_encrypt returned -0x%04x\n", -ret);
   }
 
+  printf("len of buf is :%d \n", sizeof(buf));
   print_array(buf,128);
   printf("~~~~~~~~\n");
   printf("\n");
@@ -419,9 +427,10 @@ int main()
     }
 
     //----------CLIENT RECIEVE PUBLIC KEY--------------------
-    int public_key_length=162;
+    int public_key_length=272;
     char public_key[public_key_length];
     size_t public_key_size = sizeof public_key / sizeof public_key[0];
+    printf("size:%d",public_key_size);
 
     receivePublicKey(&socket, public_key, public_key_length);
 
@@ -432,7 +441,7 @@ int main()
 
     unsigned char aes_key[32];
     size_t aes_key_size = sizeof aes_key / sizeof aes_key[0];
-    unsigned char ecryptedAesKey[129];
+    char ecryptedAesKey[129];
     generateAndEncryptAesKey(aes_key, public_key,public_key_size,aes_key_size,ecryptedAesKey);
     printf("-------------------------------------- \n");
     int i;
@@ -443,6 +452,14 @@ int main()
       printf("%X ", ecryptedAesKey[i]);
     }
     printf("\r\n");
+
+    struct message encryptedAesKey_message;
+
+    encryptedAesKey_message.type = ecryptedAesKey[0];
+    encryptedAesKey_message.length = (sizeof ecryptedAesKey);
+    encryptedAesKey_message.payload =ecryptedAesKey;
+
+    int rec = sendMessageToServer(&socket, encryptedAesKey_message);
 
 
     //----------CLIENT SEND DEVICE ID--------------------
