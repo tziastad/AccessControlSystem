@@ -13,6 +13,10 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 from Crypto.Cipher import PKCS1_v1_5
 
+import base64
+import hashlib
+from Crypto.Cipher import AES
+
 def search_for_pair_in_database(device_id,card_id):
     # connect with database
     conn = sqlite3.connect(r"C:\Users\Dora\Desktop\Start Diplomatiki\DoorLock.db")
@@ -49,6 +53,12 @@ def search_for_device_id_in_database(device_id):
                 return "Device id is known."
 
 
+def aes_decryption(aes_key,encrypted_data):
+    aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in CBC mode requires re creating an aes object
+    decrypted_text = aes.decrypt(encrypted_data)
+    print("Plaintext:", decrypted_text.hex())
+    output = decrypted_text.hex()
+    return output
 
 
 def main():
@@ -84,17 +94,11 @@ def main():
     fd = open("public_key.pem", "wb")
     fd.write(public_key)
     fd.close()
-    """
-    random_generator = Random.new().read
-    key= RSA.generate(1024, random_generator)
-    public = key.publickey().exportKey("DER")
-    public2 = key.publickey().exportKey("PEM")
-    print(len(public2))
-    print(public2)
-    print(len(public))
-    print(public)
-    print(public.hex())
-    """
+
+    BLOCK_SIZE = 16
+    pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
+    unpad = lambda s: s[:-ord(s[len(s) - 1:])]
+
 
     while 1:
         # Get the list sockets which are ready to be read through select
@@ -121,7 +125,7 @@ def main():
                     print(data)
                     dataAsHex=data.hex()
                     print(type(dataAsHex))
-                    access_message=""
+                    global aes_key
                     #print("data as hex:", dataAsHex)
                     if (data[0:1].decode("utf-8") == "!"):
                         print("message is:", data.decode("utf-8"))
@@ -132,28 +136,36 @@ def main():
                         print("Encrypted AES key", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         print("kommeno:",data[1:len(data)])
                         print(len(data[1:len(data)]))
-                        print(type(data))
-                        print(data.hex())
+
                         key = RSA.import_key(open('private_key.pem').read())
                         sentinel = Random.new().read(128)  # data length is 256
                         cipher = PKCS1_v1_5.new(key)
-                        messagereceived = cipher.decrypt(data[1:len(data)], sentinel)
+                        aes_key = cipher.decrypt(data[1:len(data)], sentinel)
                         print(".......................")
-                        print("decrypted message:",messagereceived)
-                        print("hex decrypted message:", messagereceived.hex())
-                        print(len(messagereceived))
-                        print(type(messagereceived))
+                        print("decrypted message:",aes_key)
+                        print(len(aes_key))
+                        print("aes key is:", aes_key.hex())
                         print("------------------------------------------------------------")
                     elif(data[0:1].decode("utf-8")=="#"):
+
+
                         print("Data device:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         device_id=dataAsHex[2:len(dataAsHex)]
-                        #print(device_id)
+                        print(data[1:len(data)])
+                        print(len(data[1:len(data)]))
+
+
+                        #aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in CBC mode requires re creating an aes object
+                        #den_text = aes.decrypt(data[1:len(data)])
+                        #print("Plaintext:", den_text.hex())
+                        device_id=aes_decryption(aes_key,data[1:len(data)])
                         access_message = search_for_device_id_in_database(device_id)
                         sockfd.send(access_message.encode())
                     elif(data[0:1].decode("utf-8")=="@"):
                         print("Data card:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         card_id = dataAsHex[2:len(dataAsHex)]
                         print(card_id)
+                        print(device_id)
                         access_message=search_for_pair_in_database(device_id,card_id)
                         sockfd.send(access_message.encode())
 

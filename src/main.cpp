@@ -14,6 +14,7 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/version.h"
+#include "mbedtls/aes.h"
 
 #define ENABLE_ECDSA
 
@@ -77,10 +78,10 @@ void findUniqueDeviceId(char temp[])
   {
     char *pointer = (char *)IdentificationRegistersAddresses[i];
 
-    temp[1 + i * 4] = pointer[0];
-    temp[1 + (i * 4) + 1] = pointer[1];
-    temp[1 + (i * 4) + 2] = pointer[2];
-    temp[1 + (i * 4) + 3] = pointer[3];
+    temp[i * 4] = pointer[0];
+    temp[(i * 4) + 1] = pointer[1];
+    temp[(i * 4) + 2] = pointer[2];
+    temp[(i * 4) + 3] = pointer[3];
   }
   /*
     for (int i = 0; i < 16; ++i) {
@@ -196,11 +197,34 @@ int checkIfServerIsDown(int scount)
   }
   return 0;
 }
+void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_output[], int isCard){
+  mbedtls_aes_context aes;
+  mbedtls_aes_init( &aes );
+  mbedtls_aes_setkey_enc(&aes, aes_key, 256);
 
-void RFIDCommunication(int communication_failed, TCPSocket *sock)
+  unsigned char output_buffer[16];
+  mbedtls_aes_crypt_ecb( &aes, MBEDTLS_AES_ENCRYPT, (const unsigned char*)plainText, output_buffer);
+  mbedtls_aes_free( &aes );
+  printf("-----aes encrypted message---- \n");
+  print_array(output_buffer,16);
+  memmove(encrypt_output+1, output_buffer, 16); //insert type of message at buffer
+  if(isCard==0){
+    encrypt_output[0] = '#';
+  }
+  else{
+    encrypt_output[0] = '@';
+  }
+  
+  printf("-----prosthetw sima---- \n");
+  print_id(encrypt_output,17);
+  printf("~~~~~~~~~~\n");
+  
+}
+
+void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char aes_key[])
 {
 
-  char card_id[5] = "@";
+  char card_id[4] = "";
   LedBlue = 1;
   printf("Scan your tag...\n");
 
@@ -235,11 +259,15 @@ void RFIDCommunication(int communication_failed, TCPSocket *sock)
     // Print Card UID
     for (uint8_t i = 0; i < RfChip.uid.size; i++)
     {
-      card_id[1 + i] = RfChip.uid.uidByte[i];
+      card_id[i] = RfChip.uid.uidByte[i];
       // printf(" %X", RfChip.uid.uidByte[i]);
     }
 
     ThisThread::sleep_for(100);
+    printf("---card id----- \n");
+    print_byte_array(card_id,4);
+    char encrypted_card_id[17];
+    aesEncryption(card_id,aes_key,encrypted_card_id,1);
 
     struct message card_message;
 
@@ -356,6 +384,8 @@ void generateAndEncryptAesKey(unsigned char aes_key[], char public_key[],size_t 
 
 }
 
+
+
 void receivePublicKey(TCPSocket *socket, char public_key[], int n)
 {
   char rbuffer[n];
@@ -401,7 +431,7 @@ int main()
 
   int communication_failed = 0;
 
-  char device_id[17] = "#";
+  char device_id[16];
   findUniqueDeviceId(device_id);
   //printf("mbedtls version:%d.%d.%d.\n", MBEDTLS_VERSION_MAJOR, MBEDTLS_VERSION_MINOR, MBEDTLS_VERSION_PATCH);
 
@@ -430,7 +460,7 @@ int main()
     int public_key_length=272;
     char public_key[public_key_length];
     size_t public_key_size = sizeof public_key / sizeof public_key[0];
-    printf("size:%d",public_key_size);
+    printf("size:%d \n",public_key_size);
 
     receivePublicKey(&socket, public_key, public_key_length);
 
@@ -445,7 +475,7 @@ int main()
     generateAndEncryptAesKey(aes_key, public_key,public_key_size,aes_key_size,ecryptedAesKey);
     printf("-------------------------------------- \n");
     int i;
-    printf("encrypted lentgth: %d\n", sizeof(ecryptedAesKey));
+    printf("encrypted len: %d\n", sizeof(ecryptedAesKey));
     printf("%.*s ", 1, ecryptedAesKey);
     for (int i = 1; i < 129; i++)
     {
@@ -463,11 +493,23 @@ int main()
 
 
     //----------CLIENT SEND DEVICE ID--------------------
+    char encrypted_device_id[17];
+    printf("uncrypted device id is: \n");
+    print_byte_array(device_id,16);
+    aesEncryption(device_id,aes_key,encrypted_device_id,0);
+    printf("-----encrypted device id---- \n");
+     printf("%.*s ", 1, encrypted_device_id);
+    for (int i = 1; i < 17; i++)
+    {
+      printf("%X ", encrypted_device_id[i]);
+    }
+    printf("\r\n");
+
     struct message device_message;
 
-    device_message.type = device_id[0];
-    device_message.length = (sizeof device_id);
-    device_message.payload = device_id;
+    device_message.type = encrypted_device_id[0];
+    device_message.length = (sizeof encrypted_device_id);
+    device_message.payload = encrypted_device_id;
 
     int s = sendMessageToServer(&socket, device_message);
 
@@ -481,7 +523,7 @@ int main()
 
     //---------------SCAN TAGS-----------------------
 
-    RFIDCommunication(communication_failed, &socket);
+    RFIDCommunication(communication_failed, &socket,aes_key);
 
     // Close the socket to return its memory and bring down the network interface
     socket.close();
