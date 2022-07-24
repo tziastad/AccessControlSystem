@@ -271,9 +271,9 @@ void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char a
 
     struct message card_message;
 
-    card_message.type = card_id[0];
-    card_message.length = (sizeof card_id);
-    card_message.payload = card_id;
+    card_message.type = encrypted_card_id[0];
+    card_message.length = (sizeof encrypted_card_id);
+    card_message.payload = encrypted_card_id;
 
     int scount = sendMessageToServer(sock, card_message);
 
@@ -293,7 +293,7 @@ int askForPublicKey(TCPSocket *socket)
 {
 
   struct message hello_message;
-  char hello_msg[] = "!Hello, I need public key.";
+  char hello_msg[] = "!public key";
 
   hello_message.type = hello_msg[0];
   hello_message.length = (sizeof hello_msg);

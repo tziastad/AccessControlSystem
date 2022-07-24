@@ -164,9 +164,13 @@ def main():
                     elif(data[0:1].decode("utf-8")=="@"):
                         print("Data card:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         card_id = dataAsHex[2:len(dataAsHex)]
-                        print(card_id)
+                        print(data)
+                        print(len(data))
                         print(device_id)
-                        access_message=search_for_pair_in_database(device_id,card_id)
+                        card_id = aes_decryption(aes_key, data[1:len(data)])
+                        print(len(card_id))
+                        print(card_id[:8])
+                        access_message=search_for_pair_in_database(device_id,card_id[0:8])
                         sockfd.send(access_message.encode())
 
                 # client disconnected, so remove from socket list
