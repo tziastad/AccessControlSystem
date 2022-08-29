@@ -28,11 +28,11 @@ def search_for_pair_in_database(device_id,card_id):
 
     result = cur.fetchone()
     if (result == None):
-        return "Sorry, you can't access."
+        return "disallow"
     else:
         for row in result:
             if(row==device_id):
-                return "Door is opened."
+                return "allow"
 
 def search_for_device_id_in_database(device_id):
     # connect with database
@@ -52,10 +52,15 @@ def search_for_device_id_in_database(device_id):
 
 
 def aes_decryption(aes_key,encrypted_data):
-    aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in ECB mode requires re creating an aes object
+    """aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in ECB mode requires re creating an aes object
     decrypted_text = aes.decrypt(encrypted_data)
     print("Plaintext:", decrypted_text.hex())
-    output = decrypted_text.hex()
+    output = decrypted_text.hex()"""
+    iv = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
+    aes = AES.new(aes_key, AES.MODE_CBC, iv)  # Decryption in CBC mode requires re creating an aes object
+    den_text = aes.decrypt(encrypted_data)
+    print("Plaintext:", den_text)
+    output = den_text.hex()
     return output
 
 
@@ -136,7 +141,7 @@ def main():
                         aes_key = cipher.decrypt(data[1:len(data)], sentinel)
                         print(".......................")
                         #print("decrypted message:",aes_key)
-                        #print(len(aes_key))
+                        print(len(aes_key))
                         print("aes key is:", aes_key.hex())
                         print("------------------------------------------------------------")
                     elif(data[0:1].decode("utf-8")=="#"):

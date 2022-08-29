@@ -19,6 +19,12 @@
 
 #define ENABLE_ECDSA
 
+/* MESSAGE SYMBOLS MEANING
+! --> CLIENT ASK FOR PUBLIC KEY
+# --> DEVIDE ID
+@ --> CARD ID
+^ --> ENCREPTYD AES KEY
+*/
 
 
 // FRDM-K64F (Freescale) Pin for MFRC522 reset
@@ -155,8 +161,8 @@ int sendMessageToServer(TCPSocket *socket, struct message msg)
 void receiveResponseFromServer(TCPSocket *socket, int bufferLength, int isCard)
 {
 
-  char allow[] = "Door is opened.";
-  char do_not_allow[] = "Sorry, you can't access.";
+  char allow[] = "allow";
+  char do_not_allow[] = "disallow";
   // Recieve a simple response and print out the response line
   char rbuffer[bufferLength];
   memset(rbuffer, 0, bufferLength); // clear the previous message
@@ -207,8 +213,11 @@ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_outpu
   mbedtls_aes_init( &aes );
   mbedtls_aes_setkey_enc(&aes, aes_key, 256); // 32 bytes key
 
+  unsigned char iv[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
   unsigned char output_buffer[16];
-  mbedtls_aes_crypt_ecb( &aes, MBEDTLS_AES_ENCRYPT, (const unsigned char*)plainText, output_buffer);
+  size_t INPUT_LENGTH=16;
+   mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_ENCRYPT, INPUT_LENGTH, iv, (const unsigned char*)plainText, output_buffer);
+  //mbedtls_aes_crypt_ecb( &aes, MBEDTLS_AES_ENCRYPT, (const unsigned char*)plainText, output_buffer);
   mbedtls_aes_free( &aes );
   printf("-----aes encrypted message---- \n");
   print_array(output_buffer,16);
@@ -303,7 +312,7 @@ int askForPublicKey(TCPSocket *socket)
 {
 
   struct message hello_message;
-  char hello_msg[] = "!public key";
+  char hello_msg[] = "!pk";
 
   hello_message.type = hello_msg[0];
   hello_message.length = (sizeof hello_msg);
