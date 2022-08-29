@@ -13,8 +13,6 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 from Crypto.Cipher import PKCS1_v1_5
 
-import base64
-import hashlib
 from Crypto.Cipher import AES
 
 def search_for_pair_in_database(device_id,card_id):
@@ -54,7 +52,7 @@ def search_for_device_id_in_database(device_id):
 
 
 def aes_decryption(aes_key,encrypted_data):
-    aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in CBC mode requires re creating an aes object
+    aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in ECB mode requires re creating an aes object
     decrypted_text = aes.decrypt(encrypted_data)
     print("Plaintext:", decrypted_text.hex())
     output = decrypted_text.hex()
@@ -75,7 +73,7 @@ def main():
     # Add server socket to the list of readable connections
     CONNECTION_LIST.append(server_socket)
 
-    print("Chat server started on port " + str(PORT))
+    print("Chat server started on port !" + str(PORT))
 
 
     #RSA KEYS
@@ -94,10 +92,6 @@ def main():
     fd = open("public_key.pem", "wb")
     fd.write(public_key)
     fd.close()
-
-    BLOCK_SIZE = 16
-    pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
-    unpad = lambda s: s[:-ord(s[len(s) - 1:])]
 
 
     while 1:
@@ -121,10 +115,9 @@ def main():
                     # a "Connection reset by peer" exception will be thrown
                     data = sock.recv(RECV_BUFFER)
                     print("len of data:", len(data))
-                    print(type(data))
-                    print(data)
+                    #print(type(data))
+                    #print(data)F
                     dataAsHex=data.hex()
-                    print(type(dataAsHex))
                     global aes_key
                     #print("data as hex:", dataAsHex)
                     if (data[0:1].decode("utf-8") == "!"):
@@ -134,16 +127,16 @@ def main():
                     elif (data[0:1].decode("utf-8") == "^"):
                         print("------------------------------------------------------------")
                         print("Encrypted AES key", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
-                        print("kommeno:",data[1:len(data)])
-                        print(len(data[1:len(data)]))
+                        #print("kommeno:",data[1:len(data)])
+                        #print(len(data[1:len(data)]))
 
                         key = RSA.import_key(open('private_key.pem').read())
                         sentinel = Random.new().read(128)  # data length is 256
                         cipher = PKCS1_v1_5.new(key)
                         aes_key = cipher.decrypt(data[1:len(data)], sentinel)
                         print(".......................")
-                        print("decrypted message:",aes_key)
-                        print(len(aes_key))
+                        #print("decrypted message:",aes_key)
+                        #print(len(aes_key))
                         print("aes key is:", aes_key.hex())
                         print("------------------------------------------------------------")
                     elif(data[0:1].decode("utf-8")=="#"):
@@ -151,8 +144,8 @@ def main():
 
                         print("Data device:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         device_id=dataAsHex[2:len(dataAsHex)]
-                        print(data[1:len(data)])
-                        print(len(data[1:len(data)]))
+                        #print(data[1:len(data)])
+                        #print(len(data[1:len(data)]))
 
 
                         #aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in CBC mode requires re creating an aes object
@@ -164,11 +157,11 @@ def main():
                     elif(data[0:1].decode("utf-8")=="@"):
                         print("Data card:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         card_id = dataAsHex[2:len(dataAsHex)]
-                        print(data)
-                        print(len(data))
-                        print(device_id)
+                        #print(data)
+                        #print(len(data))
+                        #print(device_id)
                         card_id = aes_decryption(aes_key, data[1:len(data)])
-                        print(len(card_id))
+                        #print(len(card_id))
                         print(card_id[:8])
                         access_message=search_for_pair_in_database(device_id,card_id[0:8])
                         sockfd.send(access_message.encode())

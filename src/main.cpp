@@ -15,6 +15,7 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/version.h"
 #include "mbedtls/aes.h"
+#include <time.h> 
 
 #define ENABLE_ECDSA
 
@@ -198,9 +199,13 @@ int checkIfServerIsDown(int scount)
   return 0;
 }
 void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_output[], int isCard){
+  //measure aes execution
+  double time_spent = 0.0;
+  clock_t begin = clock();
+
   mbedtls_aes_context aes;
   mbedtls_aes_init( &aes );
-  mbedtls_aes_setkey_enc(&aes, aes_key, 256);
+  mbedtls_aes_setkey_enc(&aes, aes_key, 256); // 32 bytes key
 
   unsigned char output_buffer[16];
   mbedtls_aes_crypt_ecb( &aes, MBEDTLS_AES_ENCRYPT, (const unsigned char*)plainText, output_buffer);
@@ -214,8 +219,13 @@ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_outpu
   else{
     encrypt_output[0] = '@';
   }
-  
-  printf("-----prosthetw sima---- \n");
+
+  clock_t end = clock();
+  time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+ 
+  printf("---> The elapsed time is %d seconds\n", time_spent);
+
+  printf("-----insert type of message---- \n");
   print_id(encrypt_output,17);
   printf("~~~~~~~~~~\n");
   
@@ -224,7 +234,7 @@ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_outpu
 void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char aes_key[])
 {
 
-  char card_id[4] = "";
+  char card_id[5] = "";
   LedBlue = 1;
   printf("Scan your tag...\n");
 
@@ -265,7 +275,7 @@ void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char a
 
     ThisThread::sleep_for(100);
     printf("---card id----- \n");
-    print_byte_array(card_id,4);
+    print_byte_array(card_id,5);
     char encrypted_card_id[17];
     aesEncryption(card_id,aes_key,encrypted_card_id,1);
 
@@ -349,8 +359,8 @@ void generateAndEncryptAesKey(unsigned char aes_key[], char public_key[],size_t 
   }
 
   fflush(stdout);
-
-  if ((ret = mbedtls_pk_parse_public_key(&pk, (unsigned char*)public_key, public_key_len )) != 0)
+  //public_key_len+1 because we use public key in pem format and it is required from the function
+  if ((ret = mbedtls_pk_parse_public_key(&pk, (unsigned char*)public_key, public_key_len+1 )) != 0)
   {
     printf(" failed\n  ! mbedtls_pk_parse_public_key returned -0x%04x\n", -ret);
   }
@@ -419,7 +429,7 @@ int bringUpEthernetConnection(TCPSocket *socket)
 
   (*socket).open(&net);
 
-  net.gethostbyname("192.168.1.5", &a);
+  net.gethostbyname("192.168.1.4", &a);
   a.set_port(8080);
   (*socket).connect(a);
   return 0;
@@ -457,7 +467,7 @@ int main()
     }
 
     //----------CLIENT RECIEVE PUBLIC KEY--------------------
-    int public_key_length=272;
+    int public_key_length=271;
     char public_key[public_key_length];
     size_t public_key_size = sizeof public_key / sizeof public_key[0];
     printf("size:%d \n",public_key_size);

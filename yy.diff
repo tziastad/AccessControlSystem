@@ -1,0 +1,222 @@
+diff --git a/private_key.pem b/private_key.pem
+index 74fabfd..9237382 100644
+--- a/private_key.pem
++++ b/private_key.pem
+@@ -1,15 +1,15 @@
+ -----BEGIN RSA PRIVATE KEY-----
+-MIICWwIBAAKBgQCuxFgfIV8iTD0W6O+Ft9MV06gggE3GwiN+10CKwrUFzEuoR4DS
+-lovcVrISqgNr1+UTZ93G/V2ancAywx/tQhtQmtb6E6A/vyKc4dGwQDd4+MOwaDRC
+-YnMGwO1HH6Z/MIoUumfqfIrmUHap2LJiGf/aqmF2oZ7IJQODxLsSYepOrQIDAQAB
+-AoGAAYDMz+UQlWdEdehQ+bxyrf22X3kwXLpEuzg3ZOTMe8fzCqJ6zX+KpRLV0JVH
+-wZYHcVrzrFzM1kyZtOtlYJFbUhrY5a8vVTRAfadBB5mRvOcUb6957+NwrZ0FcMED
+-gb3OQzk51Px6T6YZ9kkE9weOozB8PMj24dh6jnqL28NSRh0CQQDJUIB+O4FJ5/xa
+-woLg3yJpVZeENgSY09Q5oUGG4O6aTMCgxghtP0pONj+bbqe2S3GUjJHfpAS2p1D3
+-E+qG7Z+3AkEA3j23xHfLNjzw4Ue2Qm14QGbv51gATa3bna2ecgyGwYkClP1godtf
+-Q/rnJO23bWS+Qw3/AgRjInuOMiyKetZ8uwJAT6K1wbm+UkMf07NgXJ5IGY0PS/Cm
+-buJU8Js2taljGczE4pSUHstLlJbnIJBsbbN4ccANsH9MkgisAaFyQ//aDwJAAg01
+-zhWBBb4oRxwfXZufGZEZs9wHHLB3L4xzwv/EmrLGGFQCeVwKFBmT2q5rHBJrAzl0
+-2jLqK15SoLnyiVHDkwJAXFZrA6on5dgjUqzic9RhrKxlZh8A8dNX6frIWHiIWYB3
+-MH9CXDxHtmKk6zQp0qb+kVui82dfnUR2YMJUhJtVyw==
++MIICXQIBAAKBgQDSCbceSKZ2iGvuU76/TXXn/bHFyUpFp/jCCSNKWaMRBlSTShbE
++jCPtureWE9Ug7ES2qVSMO0Eiz5QSk9SiqiPm1hr44TVou1Gze+/OSP1RH7PiNtH5
++SGPF+v0S3xHaAbXczZzS0yZZH9jkJRT5a+C90qMcxVX5ya1Ijum1znmDWwIDAQAB
++AoGAGz5bXDg8L0p0BXkjWBj/XtS58a0G+eYBuYQJ6c5FUnipu7kedDwL5P1qbAhX
++2r9gDPlbGB1kzikdTGjpvyJRKZcJjYVrlh7kXCU1fK3ZBXtYE37pKBkjTLvKOblL
++XpKhozDPbHBAtM42qLZ+6Rwb8hGvEeXpkMJZw9iqZtFgbXECQQDdIV7SKZXhL/D5
++yRhqwJCe01TWlva9txfWh1+h9WmpFfGUyo4I398u2RhMc/snoMCegHbXjFtjJKHS
++hovYRp31AkEA8yiQl+WXT05W3okw1rzShXzyHKb5E53oVR4E4rt4vQCssGu3+xZ7
++GSYin66jJa5oCzRZNKerLAOYlrxcYaH6DwJBAKLh+8hunVo8SBKWEAhCQ8TaAfn3
++RVTFUyfQm57e+K913HcvJKRg0zLc8ssN+4hbHsch9WgcmQxUZWZ/eO8cRSkCQQDA
++mkYF+zbh+5R1isejoEdEsxZ3uY6bij2IhlGqYoKdetZOm9RMT59L6VgNkd/qrf39
++ugZa3eCI6YRJCYRHVWzjAkB5Kj31eW1nZChSQPV1rtWvqJMHI9G+m9z//O5+CdgE
++WSnTImQvK0RFD6JA3C7CIVeLgV/+gyT3qQXso0Oslc/w
+ -----END RSA PRIVATE KEY-----
+\ No newline at end of file
+diff --git a/public_key.pem b/public_key.pem
+index 7bbd92c..428ce98 100644
+--- a/public_key.pem
++++ b/public_key.pem
+@@ -1,6 +1,6 @@
+ -----BEGIN PUBLIC KEY-----
+-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCuxFgfIV8iTD0W6O+Ft9MV06gg
+-gE3GwiN+10CKwrUFzEuoR4DSlovcVrISqgNr1+UTZ93G/V2ancAywx/tQhtQmtb6
+-E6A/vyKc4dGwQDd4+MOwaDRCYnMGwO1HH6Z/MIoUumfqfIrmUHap2LJiGf/aqmF2
+-oZ7IJQODxLsSYepOrQIDAQAB
++MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDSCbceSKZ2iGvuU76/TXXn/bHF
++yUpFp/jCCSNKWaMRBlSTShbEjCPtureWE9Ug7ES2qVSMO0Eiz5QSk9SiqiPm1hr4
++4TVou1Gze+/OSP1RH7PiNtH5SGPF+v0S3xHaAbXczZzS0yZZH9jkJRT5a+C90qMc
++xVX5ya1Ijum1znmDWwIDAQAB
+ -----END PUBLIC KEY-----
+\ No newline at end of file
+diff --git a/src/main.cpp b/src/main.cpp
+index 0d85a23..f62606e 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -200,7 +200,7 @@ int checkIfServerIsDown(int scount)
+ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_output[], int isCard){
+   mbedtls_aes_context aes;
+   mbedtls_aes_init( &aes );
+-  mbedtls_aes_setkey_enc(&aes, aes_key, 256);
++  mbedtls_aes_setkey_enc(&aes, aes_key, 256); // 32 bytes key
+ 
+   unsigned char output_buffer[16];
+   mbedtls_aes_crypt_ecb( &aes, MBEDTLS_AES_ENCRYPT, (const unsigned char*)plainText, output_buffer);
+@@ -215,7 +215,7 @@ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_outpu
+     encrypt_output[0] = '@';
+   }
+   
+-  printf("-----prosthetw sima---- \n");
++  printf("-----insert type of message---- \n");
+   print_id(encrypt_output,17);
+   printf("~~~~~~~~~~\n");
+   
+@@ -224,7 +224,7 @@ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_outpu
+ void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char aes_key[])
+ {
+ 
+-  char card_id[4] = "";
++  char card_id[5] = "";
+   LedBlue = 1;
+   printf("Scan your tag...\n");
+ 
+@@ -265,7 +265,7 @@ void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char a
+ 
+     ThisThread::sleep_for(100);
+     printf("---card id----- \n");
+-    print_byte_array(card_id,4);
++    print_byte_array(card_id,5);
+     char encrypted_card_id[17];
+     aesEncryption(card_id,aes_key,encrypted_card_id,1);
+ 
+@@ -349,8 +349,8 @@ void generateAndEncryptAesKey(unsigned char aes_key[], char public_key[],size_t
+   }
+ 
+   fflush(stdout);
+-
+-  if ((ret = mbedtls_pk_parse_public_key(&pk, (unsigned char*)public_key, public_key_len )) != 0)
++  //public_key_len+1 because we use public key in pem format and it is required from the function
++  if ((ret = mbedtls_pk_parse_public_key(&pk, (unsigned char*)public_key, public_key_len+1 )) != 0)
+   {
+     printf(" failed\n  ! mbedtls_pk_parse_public_key returned -0x%04x\n", -ret);
+   }
+@@ -419,7 +419,7 @@ int bringUpEthernetConnection(TCPSocket *socket)
+ 
+   (*socket).open(&net);
+ 
+-  net.gethostbyname("192.168.1.5", &a);
++  net.gethostbyname("192.168.1.2", &a);
+   a.set_port(8080);
+   (*socket).connect(a);
+   return 0;
+@@ -457,7 +457,7 @@ int main()
+     }
+ 
+     //----------CLIENT RECIEVE PUBLIC KEY--------------------
+-    int public_key_length=272;
++    int public_key_length=271;
+     char public_key[public_key_length];
+     size_t public_key_size = sizeof public_key / sizeof public_key[0];
+     printf("size:%d \n",public_key_size);
+diff --git a/tcpserver.py b/tcpserver.py
+index ef0e3ee..22ff038 100644
+--- a/tcpserver.py
++++ b/tcpserver.py
+@@ -13,8 +13,6 @@ from Crypto.PublicKey import RSA
+ from Crypto import Random
+ from Crypto.Cipher import PKCS1_v1_5
+ 
+-import base64
+-import hashlib
+ from Crypto.Cipher import AES
+ 
+ def search_for_pair_in_database(device_id,card_id):
+@@ -54,7 +52,7 @@ def search_for_device_id_in_database(device_id):
+ 
+ 
+ def aes_decryption(aes_key,encrypted_data):
+-    aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in CBC mode requires re creating an aes object
++    aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in ECB mode requires re creating an aes object
+     decrypted_text = aes.decrypt(encrypted_data)
+     print("Plaintext:", decrypted_text.hex())
+     output = decrypted_text.hex()
+@@ -75,7 +73,7 @@ def main():
+     # Add server socket to the list of readable connections
+     CONNECTION_LIST.append(server_socket)
+ 
+-    print("Chat server started on port " + str(PORT))
++    print("Chat server started on port !" + str(PORT))
+ 
+ 
+     #RSA KEYS
+@@ -95,10 +93,6 @@ def main():
+     fd.write(public_key)
+     fd.close()
+ 
+-    BLOCK_SIZE = 16
+-    pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
+-    unpad = lambda s: s[:-ord(s[len(s) - 1:])]
+-
+ 
+     while 1:
+         # Get the list sockets which are ready to be read through select
+@@ -121,10 +115,9 @@ def main():
+                     # a "Connection reset by peer" exception will be thrown
+                     data = sock.recv(RECV_BUFFER)
+                     print("len of data:", len(data))
+-                    print(type(data))
+-                    print(data)
++                    #print(type(data))
++                    #print(data)F
+                     dataAsHex=data.hex()
+-                    print(type(dataAsHex))
+                     global aes_key
+                     #print("data as hex:", dataAsHex)
+                     if (data[0:1].decode("utf-8") == "!"):
+@@ -134,16 +127,16 @@ def main():
+                     elif (data[0:1].decode("utf-8") == "^"):
+                         print("------------------------------------------------------------")
+                         print("Encrypted AES key", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
+-                        print("kommeno:",data[1:len(data)])
+-                        print(len(data[1:len(data)]))
++                        #print("kommeno:",data[1:len(data)])
++                        #print(len(data[1:len(data)]))
+ 
+                         key = RSA.import_key(open('private_key.pem').read())
+                         sentinel = Random.new().read(128)  # data length is 256
+                         cipher = PKCS1_v1_5.new(key)
+                         aes_key = cipher.decrypt(data[1:len(data)], sentinel)
+                         print(".......................")
+-                        print("decrypted message:",aes_key)
+-                        print(len(aes_key))
++                        #print("decrypted message:",aes_key)
++                        #print(len(aes_key))
+                         print("aes key is:", aes_key.hex())
+                         print("------------------------------------------------------------")
+                     elif(data[0:1].decode("utf-8")=="#"):
+@@ -151,8 +144,8 @@ def main():
+ 
+                         print("Data device:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
+                         device_id=dataAsHex[2:len(dataAsHex)]
+-                        print(data[1:len(data)])
+-                        print(len(data[1:len(data)]))
++                        #print(data[1:len(data)])
++                        #print(len(data[1:len(data)]))
+ 
+ 
+                         #aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in CBC mode requires re creating an aes object
+@@ -164,11 +157,11 @@ def main():
+                     elif(data[0:1].decode("utf-8")=="@"):
+                         print("Data card:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
+                         card_id = dataAsHex[2:len(dataAsHex)]
+-                        print(data)
+-                        print(len(data))
+-                        print(device_id)
++                        #print(data)
++                        #print(len(data))
++                        #print(device_id)
+                         card_id = aes_decryption(aes_key, data[1:len(data)])
+-                        print(len(card_id))
++                        #print(len(card_id))
+                         print(card_id[:8])
+                         access_message=search_for_pair_in_database(device_id,card_id[0:8])
+                         sockfd.send(access_message.encode())
