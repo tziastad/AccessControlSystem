@@ -10,12 +10,17 @@
 #include <string.h>
 #include <stdio.h>
 #include "mbedtls/error.h"
-#include "mbedtls/pk.h"
+#include "mbedtls/pk.h"//gg
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/version.h"
 #include "mbedtls/aes.h"
-#include <time.h> 
+#include <time.h>
+#include <sys/time.h>
+
+#define FREESCALE_MMCAU
+
+
 
 #define ENABLE_ECDSA
 
@@ -205,20 +210,37 @@ int checkIfServerIsDown(int scount)
   return 0;
 }
 void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_output[], int isCard){
+  Timer t;
   //measure aes execution
-  double time_spent = 0.0;
-  clock_t begin = clock();
+  
+  using namespace std::chrono;
+  auto start = time_point_cast<microseconds>(Kernel::Clock::now()); // Convert time_point to one in microsecond accuracy
+  long start_micros = start.time_since_epoch().count();
+  printf("Start time is %d ms\n", start_micros);
 
   mbedtls_aes_context aes;
   mbedtls_aes_init( &aes );
   mbedtls_aes_setkey_enc(&aes, aes_key, 256); // 32 bytes key
 
-  unsigned char iv[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+  unsigned char iv[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0e};
   unsigned char output_buffer[16];
   size_t INPUT_LENGTH=16;
-   mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_ENCRYPT, INPUT_LENGTH, iv, (const unsigned char*)plainText, output_buffer);
+  mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_ENCRYPT, INPUT_LENGTH, iv, (const unsigned char*)plainText, output_buffer);
   //mbedtls_aes_crypt_ecb( &aes, MBEDTLS_AES_ENCRYPT, (const unsigned char*)plainText, output_buffer);
+  
   mbedtls_aes_free( &aes );
+ 
+
+  auto end = time_point_cast<microseconds>(Kernel::Clock::now()); // Convert time_point to one in microsecond accuracy
+  long end_micros = end.time_since_epoch().count();
+  printf("End time is  %d ms\n", end_micros);
+  
+  long elapsed_time= end_micros - start_micros;
+  printf("total_elapsed_time %d ms\n", elapsed_time);
+
+
+
+
   printf("-----aes encrypted message---- \n");
   print_array(output_buffer,16);
   memmove(encrypt_output+1, output_buffer, 16); //insert type of message at buffer
@@ -228,11 +250,18 @@ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_outpu
   else{
     encrypt_output[0] = '@';
   }
-
-  clock_t end = clock();
-  time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+  
+  //  double time_spent = 0.0;
+  //clock_t begin = clock();
+  //ThisThread::sleep_for(20000);
+  //clock_t end = clock();
+  //double end1 = (double) ((end - begin)*1000);
+  //time_spent = end1 /(double) CLOCKS_PER_SEC;
  
-  printf("---> The elapsed time is %d seconds\n", time_spent);
+  //printf("---> The elapsed time is %d seconds\n", time_spent);
+  //double for_time=t.read_us();
+  //t.stop();
+  //printf("The time taken was %d seconds\n", for_time);
 
   printf("-----insert type of message---- \n");
   print_id(encrypt_output,17);
@@ -438,15 +467,32 @@ int bringUpEthernetConnection(TCPSocket *socket)
 
   (*socket).open(&net);
 
-  net.gethostbyname("192.168.1.4", &a);
+  net.gethostbyname("192.168.1.105", &a);
   a.set_port(8080);
   (*socket).connect(a);
   return 0;
 }
 
+
 int main()
 {
   turnOnBlueLight();
+
+
+//   struct timeval start, end;
+ 
+//   gettimeofday(&start, NULL);
+// //do stuff
+//   ThisThread::sleep_for(3000);
+//   gettimeofday(&end, NULL);
+//   long seconds = (end.tv_sec - start.tv_sec);
+//   long micros = ((seconds * 1000000) + end.tv_usec) - (start.tv_usec);
+//   long milli=micros/1000;
+ 
+//    printf("The elapsed time is %d seconds and %d micros and %d milli\n", seconds, micros, milli);
+ 
+
+
 
   int communication_failed = 0;
 
@@ -493,7 +539,6 @@ int main()
     char ecryptedAesKey[129];
     generateAndEncryptAesKey(aes_key, public_key,public_key_size,aes_key_size,ecryptedAesKey);
     printf("-------------------------------------- \n");
-    int i;
     printf("encrypted len: %d\n", sizeof(ecryptedAesKey));
     printf("%.*s ", 1, ecryptedAesKey);
     for (int i = 1; i < 129; i++)
