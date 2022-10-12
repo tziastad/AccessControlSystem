@@ -5,7 +5,7 @@
 #include "mbed.h"
 #include "MFRC522.h"
 #include "EthernetInterface.h"
-
+#include "cau_api.h"
 #include "mbed_config.h"
 #include <string.h>
 #include <stdio.h>
@@ -17,8 +17,10 @@
 #include "mbedtls/aes.h"
 #include <time.h>
 #include <sys/time.h>
+#include <regex.h>
+#define FREESCALE_MMCAU 
 
-#define FREESCALE_MMCAU
+
 
 
 
@@ -129,6 +131,50 @@ void print_byte_array(char * array, int n){
   }
   printf("\r\n");
 }
+void decryptMessage(char chipherText[], unsigned char aes_key[], int isCard){
+
+  unsigned char success[] = {0x30};
+  mbedtls_aes_context aes;
+  mbedtls_aes_init( &aes );
+  mbedtls_aes_setkey_dec(&aes, aes_key, 256); // 32 bytes key
+
+  size_t INPUT_LENGTH=16;
+  unsigned char decrypt_output[16];
+ 
+
+  unsigned char iv[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0e};
+  mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_DECRYPT, INPUT_LENGTH, iv, (const unsigned char*)chipherText, decrypt_output);
+
+  mbedtls_aes_free( &aes );
+  
+  if(isCard){
+    if(decrypt_output[0]==success[0]){
+      printf("success");
+      printf("\n\r");
+      turnOnGreenLight();
+      
+    }
+    else{
+      printf("fail");
+      printf("\n\r");
+      turnOnRedLight();
+    }
+    ThisThread::sleep_for(1s);
+  }
+  else{
+    if(decrypt_output[0]==success[0]){
+      printf("known device id");
+      printf("\n\r");
+    }
+    else{
+      printf("unknown device id");
+      printf("\n\r");
+    }
+
+  }
+  
+  
+}
 
 int sendMessageToServer(TCPSocket *socket, struct message msg)
 {
@@ -163,11 +209,9 @@ int sendMessageToServer(TCPSocket *socket, struct message msg)
   return sent_bytes;
 }
 
-void receiveResponseFromServer(TCPSocket *socket, int bufferLength, int isCard)
+void receiveResponseFromServer(TCPSocket *socket, int bufferLength, int isCard,unsigned char aes_key[])
 {
 
-  char allow[] = "allow";
-  char do_not_allow[] = "disallow";
   // Recieve a simple response and print out the response line
   char rbuffer[bufferLength];
   memset(rbuffer, 0, bufferLength); // clear the previous message
@@ -176,22 +220,17 @@ void receiveResponseFromServer(TCPSocket *socket, int bufferLength, int isCard)
 
   response_message.type = rbuffer[0];
   response_message.length = (sizeof rbuffer);
-  response_message.payload = rbuffer;
-
-  printf("recv %d [%.*s]\n", rcount, strstr(response_message.payload, "\r\n") - response_message.payload, response_message.payload);
-
-  if (isCard)
-  {
-    if (strcmp(allow, response_message.payload) == 0)
-    {
-      turnOnGreenLight();
+  response_message.payload=rbuffer;
+  
+  printf("recv \n");
+    for (int i = 0; i < 16; ++i) {
+        printf("%X ", rbuffer[i]);
     }
-    else if (strcmp(do_not_allow, response_message.payload) == 0)
-    {
-      turnOnRedLight();
-    }
-    ThisThread::sleep_for(3s);
-  }
+  printf("\r\n");
+  decryptMessage(rbuffer,aes_key,isCard);
+
+  //printf("recv %d [%.*s]\n", rcount, strstr(response_message.payload, "\r\n") - response_message.payload, response_message.payload);
+
 }
 
 int checkIfServerIsDown(int scount)
@@ -209,6 +248,7 @@ int checkIfServerIsDown(int scount)
   }
   return 0;
 }
+
 void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_output[], int isCard){
   Timer t;
   //measure aes execution
@@ -216,11 +256,12 @@ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_outpu
   using namespace std::chrono;
   auto start = time_point_cast<microseconds>(Kernel::Clock::now()); // Convert time_point to one in microsecond accuracy
   long start_micros = start.time_since_epoch().count();
-  printf("Start time is %d ms\n", start_micros);
+  printf("Start time is %d us\n", start_micros);
 
   mbedtls_aes_context aes;
   mbedtls_aes_init( &aes );
   mbedtls_aes_setkey_enc(&aes, aes_key, 256); // 32 bytes key
+  //cau_aes_set_key(aes_key, 256, (unsigned char *)60);
 
   unsigned char iv[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0e};
   unsigned char output_buffer[16];
@@ -236,7 +277,7 @@ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_outpu
   printf("End time is  %d ms\n", end_micros);
   
   long elapsed_time= end_micros - start_micros;
-  printf("total_elapsed_time %d ms\n", elapsed_time);
+  printf("total_elapsed_time %d us\n", elapsed_time);
 
 
 
@@ -333,7 +374,7 @@ void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char a
     }
 
     turnOffAllLights();
-    receiveResponseFromServer(sock, 25, 1);
+    receiveResponseFromServer(sock, 25, 1,aes_key);
   }
 }
 //
@@ -352,6 +393,8 @@ int askForPublicKey(TCPSocket *socket)
 
   return communication_failed;
 }
+
+
 
 void generateAndEncryptAesKey(unsigned char aes_key[], char public_key[],size_t public_key_len,size_t aes_key_len,char ecryptedAesKey[])
 {
@@ -467,7 +510,7 @@ int bringUpEthernetConnection(TCPSocket *socket)
 
   (*socket).open(&net);
 
-  net.gethostbyname("192.168.1.105", &a);
+  net.gethostbyname("192.168.1.103", &a);
   a.set_port(8080);
   (*socket).connect(a);
   return 0;
@@ -583,7 +626,7 @@ int main()
       continue;
     }
 
-    receiveResponseFromServer(&socket, 34, 0);
+    receiveResponseFromServer(&socket, 34, 0,aes_key);
 
     //---------------SCAN TAGS-----------------------
 

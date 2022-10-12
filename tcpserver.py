@@ -28,11 +28,15 @@ def search_for_pair_in_database(device_id,card_id):
 
     result = cur.fetchone()
     if (result == None):
-        return "disallow"
+        text = b'1'  # disallow
+        out = aes_encryption(aes_key, text)
+        return out
     else:
         for row in result:
             if(row==device_id):
-                return "allow"
+                text = b'0' # allow
+                out = aes_encryption(aes_key, text)
+                return out
 
 def search_for_device_id_in_database(device_id):
     # connect with database
@@ -44,11 +48,32 @@ def search_for_device_id_in_database(device_id):
 
     result = cur.fetchone()
     if (result == None):
-        return "Sorry, this device id is unknown."
+        text = b'1' #"Unknown device."
+        out = aes_encryption(aes_key, text)
+        return out
     else:
         for row in result:
             if(row==device_id):
-                return "Device id is known."
+                text=b'0' #known device id
+                out=aes_encryption(aes_key,text)
+                return out
+def aes_encryption(aes_key,text):
+    len_of_text=len(text)
+
+    bytes_val = len_of_text.to_bytes(1, 'big')
+    print(bytes_val)
+    print(type(bytes_val))
+
+    if(len(text)<16):
+        text = text.ljust(16, b'0')
+    iv = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0e"
+    aes = AES.new(aes_key, AES.MODE_CBC, iv)  # Create an aes object
+    # AES. MODE_ The CBC representation pattern is the CBC pattern
+    print("text:", text)
+    en_text = aes.encrypt(text)
+    print("Ciphertext:", en_text)  # Encrypted plaintext, bytes type
+    print(en_text.hex())
+    return en_text
 
 
 def aes_decryption(aes_key,encrypted_data):
@@ -65,6 +90,7 @@ def aes_decryption(aes_key,encrypted_data):
     print("Plaintext:", den_text.hex())
     output = den_text.hex()
     return output
+
 
 
 def main():
@@ -161,7 +187,8 @@ def main():
                         #print("Plaintext:", den_text.hex())
                         device_id=aes_decryption(aes_key,data[1:len(data)])
                         access_message = search_for_device_id_in_database(device_id)
-                        sockfd.send(access_message.encode())
+                        print("***",access_message.hex())
+                        sockfd.send(access_message)
                     elif(data[0:1].decode("utf-8")=="@"):
                         print("Data card:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         card_id = dataAsHex[2:len(dataAsHex)]
@@ -172,7 +199,7 @@ def main():
                         #print(len(card_id))
                         print(card_id[:8])
                         access_message=search_for_pair_in_database(device_id,card_id[0:8])
-                        sockfd.send(access_message.encode())
+                        sockfd.send(access_message)
 
                 # client disconnected, so remove from socket list
                 except Exception:
