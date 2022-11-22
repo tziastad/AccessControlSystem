@@ -6,9 +6,6 @@ import sqlite3
 import sys
 import traceback
 
-
-
-from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto import Random
 from Crypto.Cipher import PKCS1_v1_5
@@ -18,15 +15,13 @@ from Crypto.Cipher import AES
 def search_for_pair_in_database(device_id,card_id):
     # connect with database
     conn = sqlite3.connect(r"C:\Users\Dora\Desktop\Start Diplomatiki\DoorLock.db")
-
-
     print("pair: ",device_id,"-", card_id)
 
     cur = conn.cursor()
-
     cur.execute("SELECT DoorID FROM `User` WHERE ID = ?", [card_id])
 
     result = cur.fetchone()
+
     if (result == None):
         text = b'1'  # disallow
         out = aes_encryption(aes_key, text)
@@ -62,58 +57,32 @@ def aes_encryption(aes_key,text):
     len_of_text=len(text)
 
     bytes_val = len_of_text.to_bytes(1, 'big')
-    print(bytes_val)
-    print(type(bytes_val))
+    #print(bytes_val)
 
     if(len(text)<16):
         text = text.ljust(16, b'0')
     iv = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0e"
     aes = AES.new(aes_key, AES.MODE_CBC, iv)  # Create an aes object
     # AES. MODE_ The CBC representation pattern is the CBC pattern
-    print("text:", text)
     en_text = aes.encrypt(text)
-    print("Ciphertext:", en_text)  # Encrypted plaintext, bytes type
-    print(en_text.hex())
+    #print("Ciphertext:", en_text)  # Encrypted plaintext, bytes type
+    #print(en_text.hex())
     return en_text
 
 
 def aes_decryption(aes_key,encrypted_data):
-    """aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in ECB mode requires re creating an aes object
-    decrypted_text = aes.decrypt(encrypted_data)
-    print("Plaintext11:", decrypted_text)
-    print("Plaintext:", decrypted_text.hex())
-    output = decrypted_text.hex()
-    """
     iv = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0e"
     aes = AES.new(aes_key, AES.MODE_CBC, iv)  # Decryption in CBC mode requires re creating an aes object
     den_text = aes.decrypt(encrypted_data)
-    print("Plaintext!!!:", den_text)
     print("Plaintext:", den_text.hex())
     output = den_text.hex()
     return output
 
-
-
-def main():
-    socket_list = []  # list of socket clients
-    RECV_BUFFER = 4096  # Advisable to keep it as an exponent of 2
-    PORT = 8080
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(("0.0.0.0", PORT))
-    server.listen(1)
-    # Add server socket to the list of readable connections
-    socket_list.append(server)
-
-    print("Chat server started on port !" + str(PORT))
-
-
-    #RSA KEYS
+def generate_rsa_keys():
     new_key = RSA.generate(1024)
 
     private_key = new_key.exportKey("PEM")
     public_key = new_key.publickey().exportKey("PEM")
-    print(type(public_key))
-    print(len(public_key))
     print(public_key)
 
     fd = open("private_key.pem", "wb")
@@ -123,6 +92,23 @@ def main():
     fd = open("public_key.pem", "wb")
     fd.write(public_key)
     fd.close()
+    return public_key
+
+
+def main():
+
+    #RSA KEYS
+    public_key=generate_rsa_keys()
+
+    socket_list = []  # list of socket clients
+    RECV_BUFFER = 4096  # Advisable to keep it as an exponent of 2
+    PORT = 8080
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(("0.0.0.0", PORT))
+    server.listen(1)
+    # Add server socket to the list of readable connections
+    socket_list.append(server)
+    print("Chat server started on port:" + str(PORT))
 
 
     while 1:
@@ -130,8 +116,6 @@ def main():
         readable_sockets, writable_sockets, exceptional_sockets = select.select(socket_list, [], [])
 
         for s in readable_sockets:
-
-            # New connection
             if s == server:
                 # Handle the case in which there is a new connection recieved through server_socket
                 sockfd, addr = server.accept()
@@ -140,52 +124,37 @@ def main():
 
             # Some incoming message from a client
             else:
-                # Data recieved from client, process it
                 try:
-                    # In Windows, sometimes when a TCP program closes abruptly,
-                    # a "Connection reset by peer" exception will be thrown
                     data = s.recv(RECV_BUFFER)
                     print("len of data:", len(data))
-                    #print(type(data))
-                    #print(data)F
                     dataAsHex=data.hex()
+
                     global aes_key
-                    #print("data as hex:", dataAsHex)
+
                     if (data[0:1].decode("utf-8") == "!"):
                         print("message is:", data.decode("utf-8"))
-                        #sockfd.send(public[26:247])
                         sockfd.send(public_key)
+
                     elif (data[0:1].decode("utf-8") == "^"):
                         print("------------------------------------------------------------")
                         print("Encrypted AES key", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
-                        #print("kommeno:",data[1:len(data)])
-                        #print(len(data[1:len(data)]))
-
                         key = RSA.import_key(open('private_key.pem').read())
                         sentinel = Random.new().read(128)  # data length is 256
                         cipher = PKCS1_v1_5.new(key)
                         aes_key = cipher.decrypt(data[1:len(data)], sentinel)
                         print(".......................")
-                        #print("decrypted message:",aes_key)
                         print(len(aes_key))
                         print("aes key is:", aes_key.hex())
                         print("------------------------------------------------------------")
+
                     elif(data[0:1].decode("utf-8")=="#"):
-
-
                         print("Data device:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         device_id=dataAsHex[2:len(dataAsHex)]
-                        #print(data[1:len(data)])
-                        #print(len(data[1:len(data)]))
-
-
-                        #aes = AES.new(aes_key, AES.MODE_ECB)  # Decryption in CBC mode requires re creating an aes object
-                        #den_text = aes.decrypt(data[1:len(data)])
-                        #print("Plaintext:", den_text.hex())
                         device_id=aes_decryption(aes_key,data[1:len(data)])
                         access_message = search_for_device_id_in_database(device_id)
-                        print("***",access_message.hex())
+                        #print("***",access_message.hex())
                         sockfd.send(access_message)
+
                     elif(data[0:1].decode("utf-8")=="@"):
                         print("Data card:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         card_id = dataAsHex[2:len(dataAsHex)]

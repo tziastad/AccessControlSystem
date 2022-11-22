@@ -111,7 +111,7 @@ void print_id(char *array, int n)
   {
     printf("%X ", array[i]);
   }
-  printf("\r\n");
+  //printf("\r\n");
 }
 
 void print_array(unsigned char *array, int n)
@@ -150,13 +150,13 @@ void decryptMessage(char chipherText[], unsigned char aes_key[], int isCard){
   if(isCard){
     if(decrypt_output[0]==success[0]){
       printf("success");
-      printf("\n\r");
+      printf("\r\n");
       turnOnGreenLight();
       
     }
     else{
       printf("fail");
-      printf("\n\r");
+      printf("\r\n");
       turnOnRedLight();
     }
     ThisThread::sleep_for(1s);
@@ -164,11 +164,11 @@ void decryptMessage(char chipherText[], unsigned char aes_key[], int isCard){
   else{
     if(decrypt_output[0]==success[0]){
       printf("known device id");
-      printf("\n\r");
+      printf("\r\n");
     }
     else{
       printf("unknown device id");
-      printf("\n\r");
+      printf("\r\n");
     }
 
   }
@@ -187,12 +187,12 @@ int sendMessageToServer(TCPSocket *socket, struct message msg)
   printf("sent bytes are: %d \n", sent_bytes);
   if (msg.type == dev_type[0])
   {
-    printf("Device UID: ");
+    printf("Encrypted Device UID: ");
     print_id(msg.payload, msg.length);
   }
   else if (msg.type == card_type[0])
   {
-    printf("Card UID: ");
+    printf("Encrypted Card UID: ");
     print_id(msg.payload, msg.length);
   }
   else if (msg.type == hello_msg_type[0])
@@ -202,7 +202,7 @@ int sendMessageToServer(TCPSocket *socket, struct message msg)
   }
   else if (msg.type == encrypted_aes_type[0])
   {
-    printf("encrypted aes key: ");
+    printf("Encrypted aes key: ");
     print_id(msg.payload, msg.length);
     printf("\n\r");
   }
@@ -222,10 +222,10 @@ void receiveResponseFromServer(TCPSocket *socket, int bufferLength, int isCard,u
   response_message.length = (sizeof rbuffer);
   response_message.payload=rbuffer;
   
-  printf("recv \n");
-    for (int i = 0; i < 16; ++i) {
-        printf("%X ", rbuffer[i]);
-    }
+  // printf("recv \n");
+  //   for (int i = 0; i < 16; ++i) {
+  //       printf("%X ", rbuffer[i]);
+  //   }
   printf("\r\n");
   decryptMessage(rbuffer,aes_key,isCard);
 
@@ -251,13 +251,7 @@ int checkIfServerIsDown(int scount)
 
 void encryptMessage(char plainText[], unsigned char aes_key[], char encrypt_output[], int isCard){
 
-  Timer t;
-  //measure aes execution
-  using namespace std::chrono;
-  auto start = time_point_cast<microseconds>(Kernel::Clock::now()); // Convert time_point to one in microsecond accuracy
-  long start_micros = start.time_since_epoch().count();
-  printf("Start time is %d us\n", start_micros);
-
+  
   mbedtls_aes_context aes;
   mbedtls_aes_init( &aes );
   mbedtls_aes_setkey_enc(&aes, aes_key, 256); // 32 bytes key
@@ -272,18 +266,8 @@ void encryptMessage(char plainText[], unsigned char aes_key[], char encrypt_outp
   mbedtls_aes_free( &aes );
  
 
-  auto end = time_point_cast<microseconds>(Kernel::Clock::now()); // Convert time_point to one in microsecond accuracy
-  long end_micros = end.time_since_epoch().count();
-  printf("End time is  %d ms\n", end_micros);
-  
-  long elapsed_time= end_micros - start_micros;
-  printf("total_elapsed_time %d us\n", elapsed_time);
-
-
-
-
-  printf("-----aes encrypted message---- \n");
-  print_array(output_buffer,16);
+  // printf("-----aes encrypted message---- \n");
+  // print_array(output_buffer,16);
   memmove(encrypt_output+1, output_buffer, 16); //insert type of message at buffer
   if(isCard==0){
     encrypt_output[0] = '#';
@@ -292,18 +276,20 @@ void encryptMessage(char plainText[], unsigned char aes_key[], char encrypt_outp
     encrypt_output[0] = '@';
   }
 
-  printf("-----insert type of message---- \n");
-  print_id(encrypt_output,17);
-  printf("~~~~~~~~~~\n");
+  // printf("-----insert type of message---- \n");
+  // print_id(encrypt_output,17);
+  printf(".........\n");
   
 }
 
-void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char aes_key[])
+void findTagUniqueID(int communication_failed, TCPSocket *sock,unsigned char aes_key[])
 {
 
   char card_id[5] = "";
   LedBlue = 1;
+  printf("\r\n");
   printf("Scan your tag...\n");
+  printf("\r\n");
 
   // Init. RC522 Chip
   RfChip.PCD_Init();
@@ -341,7 +327,7 @@ void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char a
     }
 
     ThisThread::sleep_for(100);
-    printf("---card id----- \n");
+    printf("----- CARD ID----- \n");
     print_byte_array(card_id,5);
     char encrypted_card_id[17];
     encryptMessage(card_id,aes_key,encrypted_card_id,1);
@@ -571,16 +557,16 @@ int main()
 
     //----------CLIENT SEND DEVICE ID--------------------
     char encrypted_device_id[17];
-    printf("uncrypted device id is: \n");
+    printf("----- DEVICE ID----- \n");
     print_byte_array(device_id,16);
     encryptMessage(device_id,aes_key,encrypted_device_id,0);
-    printf("-----encrypted device id---- \n");
-     printf("%.*s ", 1, encrypted_device_id);
-    for (int i = 1; i < 17; i++)
-    {
-      printf("%X ", encrypted_device_id[i]);
-    }
-    printf("\r\n");
+    // printf("-----encrypted device id---- \n");
+    //  printf("%.*s ", 1, encrypted_device_id);
+    // for (int i = 1; i < 17; i++)
+    // {
+    //   printf("%X ", encrypted_device_id[i]);
+    // }
+    // printf("\r\n");
 
     struct message device_message;
 
@@ -600,7 +586,7 @@ int main()
 
     //---------------SCAN TAGS-----------------------
 
-    RFIDCommunication(communication_failed, &socket,aes_key);
+    findTagUniqueID(communication_failed, &socket,aes_key);
 
     // Close the socket to return its memory and bring down the network interface
     socket.close();
