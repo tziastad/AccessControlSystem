@@ -82,7 +82,7 @@ void turnOffAllLights()
   LedRed = 1;   // off
 }
 
-void findUniqueDeviceId(char temp[])
+void findUniqueDeviceId(char dev_id[])
 {
 
   // 4 registers with 32 bit- 4 bytes each and all together gives 128 bit unique id of the device- see manual page 305
@@ -92,10 +92,10 @@ void findUniqueDeviceId(char temp[])
   {
     char *pointer = (char *)IdentificationRegistersAddresses[i];
 
-    temp[i * 4] = pointer[0];
-    temp[(i * 4) + 1] = pointer[1];
-    temp[(i * 4) + 2] = pointer[2];
-    temp[(i * 4) + 3] = pointer[3];
+    dev_id[i * 4] = pointer[0];
+    dev_id[(i * 4) + 1] = pointer[1];
+    dev_id[(i * 4) + 2] = pointer[2];
+    dev_id[(i * 4) + 3] = pointer[3];
   }
   /*
     for (int i = 0; i < 16; ++i) {
@@ -249,10 +249,10 @@ int checkIfServerIsDown(int scount)
   return 0;
 }
 
-void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_output[], int isCard){
+void encryptMessage(char plainText[], unsigned char aes_key[], char encrypt_output[], int isCard){
+
   Timer t;
   //measure aes execution
-  
   using namespace std::chrono;
   auto start = time_point_cast<microseconds>(Kernel::Clock::now()); // Convert time_point to one in microsecond accuracy
   long start_micros = start.time_since_epoch().count();
@@ -291,18 +291,6 @@ void aesEncryption(char plainText[], unsigned char aes_key[], char encrypt_outpu
   else{
     encrypt_output[0] = '@';
   }
-  
-  //  double time_spent = 0.0;
-  //clock_t begin = clock();
-  //ThisThread::sleep_for(20000);
-  //clock_t end = clock();
-  //double end1 = (double) ((end - begin)*1000);
-  //time_spent = end1 /(double) CLOCKS_PER_SEC;
- 
-  //printf("---> The elapsed time is %d seconds\n", time_spent);
-  //double for_time=t.read_us();
-  //t.stop();
-  //printf("The time taken was %d seconds\n", for_time);
 
   printf("-----insert type of message---- \n");
   print_id(encrypt_output,17);
@@ -356,7 +344,7 @@ void RFIDCommunication(int communication_failed, TCPSocket *sock,unsigned char a
     printf("---card id----- \n");
     print_byte_array(card_id,5);
     char encrypted_card_id[17];
-    aesEncryption(card_id,aes_key,encrypted_card_id,1);
+    encryptMessage(card_id,aes_key,encrypted_card_id,1);
 
     struct message card_message;
 
@@ -510,7 +498,7 @@ int bringUpEthernetConnection(TCPSocket *socket)
 
   (*socket).open(&net);
 
-  net.gethostbyname("192.168.1.103", &a);
+  net.gethostbyname("192.168.1.108", &a);
   a.set_port(8080);
   (*socket).connect(a);
   return 0;
@@ -520,23 +508,6 @@ int bringUpEthernetConnection(TCPSocket *socket)
 int main()
 {
   turnOnBlueLight();
-
-
-//   struct timeval start, end;
- 
-//   gettimeofday(&start, NULL);
-// //do stuff
-//   ThisThread::sleep_for(3000);
-//   gettimeofday(&end, NULL);
-//   long seconds = (end.tv_sec - start.tv_sec);
-//   long micros = ((seconds * 1000000) + end.tv_usec) - (start.tv_usec);
-//   long milli=micros/1000;
- 
-//    printf("The elapsed time is %d seconds and %d micros and %d milli\n", seconds, micros, milli);
- 
-
-
-
   int communication_failed = 0;
 
   char device_id[16];
@@ -555,7 +526,6 @@ int main()
     }
 
     //------------CLIENT ASK FOR PUBLIC KEY------------
-    //--
 
     communication_failed = askForPublicKey(&socket);
 
@@ -603,7 +573,7 @@ int main()
     char encrypted_device_id[17];
     printf("uncrypted device id is: \n");
     print_byte_array(device_id,16);
-    aesEncryption(device_id,aes_key,encrypted_device_id,0);
+    encryptMessage(device_id,aes_key,encrypted_device_id,0);
     printf("-----encrypted device id---- \n");
      printf("%.*s ", 1, encrypted_device_id);
     for (int i = 1; i < 17; i++)

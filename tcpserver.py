@@ -57,6 +57,7 @@ def search_for_device_id_in_database(device_id):
                 text=b'0' #known device id
                 out=aes_encryption(aes_key,text)
                 return out
+
 def aes_encryption(aes_key,text):
     len_of_text=len(text)
 
@@ -94,18 +95,14 @@ def aes_decryption(aes_key,encrypted_data):
 
 
 def main():
-    CONNECTION_LIST = []  # list of socket clients
+    socket_list = []  # list of socket clients
     RECV_BUFFER = 4096  # Advisable to keep it as an exponent of 2
     PORT = 8080
-
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # this has no effect, why ?
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind(("0.0.0.0", PORT))
-    server_socket.listen(1)
-
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(("0.0.0.0", PORT))
+    server.listen(1)
     # Add server socket to the list of readable connections
-    CONNECTION_LIST.append(server_socket)
+    socket_list.append(server)
 
     print("Chat server started on port !" + str(PORT))
 
@@ -130,15 +127,15 @@ def main():
 
     while 1:
         # Get the list sockets which are ready to be read through select
-        read_sockets, write_sockets, error_sockets = select.select(CONNECTION_LIST, [], [])
+        readable_sockets, writable_sockets, exceptional_sockets = select.select(socket_list, [], [])
 
-        for sock in read_sockets:
+        for s in readable_sockets:
 
             # New connection
-            if sock == server_socket:
+            if s == server:
                 # Handle the case in which there is a new connection recieved through server_socket
-                sockfd, addr = server_socket.accept()
-                CONNECTION_LIST.append(sockfd)
+                sockfd, addr = server.accept()
+                socket_list.append(sockfd)
                 print("Client (%s, %s) connected" % addr)
 
             # Some incoming message from a client
@@ -147,7 +144,7 @@ def main():
                 try:
                     # In Windows, sometimes when a TCP program closes abruptly,
                     # a "Connection reset by peer" exception will be thrown
-                    data = sock.recv(RECV_BUFFER)
+                    data = s.recv(RECV_BUFFER)
                     print("len of data:", len(data))
                     #print(type(data))
                     #print(data)F
@@ -207,11 +204,11 @@ def main():
                     print(traceback.format_exc())
                     # broadcast_data(sock, "Client (%s, %s) is offline" % addr)
                     print("Client (%s, %s) is offline" % addr)
-                    sock.close()
-                    CONNECTION_LIST.remove(sock)
+                    s.close()
+                    socket_list.remove(s)
                     continue
     conn.close()
-    server_socket.close()
+    server.close()
 
 
 if __name__ == "__main__":
