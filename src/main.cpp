@@ -185,6 +185,9 @@ int sendMessageToServer(TCPSocket *socket, struct message msg)
   // Send the unique id of the RFID card to server
   int sent_bytes = (*socket).send(msg.payload, msg.length);
   printf("sent bytes are: %d \n", sent_bytes);
+  if(sent_bytes<=0){
+    return sent_bytes;
+  }
   if (msg.type == dev_type[0])
   {
     printf("Encrypted Device UID: ");
@@ -282,7 +285,7 @@ void encryptMessage(char plainText[], unsigned char aes_key[], char encrypt_outp
   
 }
 
-void findTagUniqueID(int communication_failed, TCPSocket *sock,unsigned char aes_key[])
+void findTagUniqueIDAndPost(int communication_failed, TCPSocket *sock,unsigned char aes_key[])
 {
 
   char card_id[5] = "";
@@ -479,6 +482,9 @@ int bringUpEthernetConnection(TCPSocket *socket)
   SocketAddress a;
   net.get_ip_address(&a);
   printf("IP address: %s\n", a.get_ip_address() ? a.get_ip_address() : "None");
+  if( a.get_ip_address()==nullptr){
+    return 1;
+  }
 
   // Open a socket on the network interface, and create a TCP connection
 
@@ -531,7 +537,7 @@ int main()
     //print_byte_array(public_key,162);
     // printf("pub key is: [%.*s]\n", strstr(public_key, "\r\n") - public_key, public_key);
 
-    //------------------------------------------------------
+    //----------GENERATE AND ENCRYPT AES KEY--------------------
 
     unsigned char aes_key[32];
     size_t aes_key_size = sizeof aes_key / sizeof aes_key[0];
@@ -586,7 +592,7 @@ int main()
 
     //---------------SCAN TAGS-----------------------
 
-    findTagUniqueID(communication_failed, &socket,aes_key);
+    findTagUniqueIDAndPost(communication_failed, &socket,aes_key);
 
     // Close the socket to return its memory and bring down the network interface
     socket.close();
