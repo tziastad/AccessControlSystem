@@ -14,7 +14,8 @@ from Crypto.Cipher import AES
 
 def search_for_pair_in_database(device_id,card_id):
     # connect with database
-    conn = sqlite3.connect(r"C:\Users\Dora\Desktop\Start Diplomatiki\DoorLock.db")
+    #conn = sqlite3.connect(r"C:\Users\Dora\Desktop\Start Diplomatiki\DoorLock.db")
+    conn = sqlite3.connect(r"DoorLock.db")
     print("pair: ",device_id,"-", card_id)
 
     cur = conn.cursor()
@@ -35,7 +36,7 @@ def search_for_pair_in_database(device_id,card_id):
 
 def search_for_device_id_in_database(device_id):
     # connect with database
-    conn = sqlite3.connect(r"C:\Users\Dora\Desktop\Start Diplomatiki\DoorLock.db")
+    conn = sqlite3.connect(r"DoorLock.db")
 
     cur = conn.cursor()
 
@@ -126,7 +127,7 @@ def main():
             else:
                 try:
                     data = s.recv(RECV_BUFFER)
-                    print("len of data:", len(data))
+                    #print("len of data:", len(data))
                     dataAsHex=data.hex()
 
                     global aes_key
@@ -139,20 +140,19 @@ def main():
                         print("------------------------------------------------------------")
                         print("Encrypted AES key", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         key = RSA.import_key(open('private_key.pem').read())
-                        sentinel = Random.new().read(128)  # data length is 256
+                        r = Random.new().read(128)
                         cipher = PKCS1_v1_5.new(key)
-                        aes_key = cipher.decrypt(data[1:len(data)], sentinel)
-                        print(".......................")
-                        print(len(aes_key))
-                        print("aes key is:", aes_key.hex())
+                        aes_key = cipher.decrypt(data[1:len(data)], r)
+                        print("----AES KEY----")
+                        print(aes_key.hex())
                         print("------------------------------------------------------------")
 
                     elif(data[0:1].decode("utf-8")=="#"):
                         print("Data device:", data[0:1].decode("utf-8") + dataAsHex[2:len(dataAsHex)])
                         device_id=dataAsHex[2:len(dataAsHex)]
+
                         device_id=aes_decryption(aes_key,data[1:len(data)])
                         access_message = search_for_device_id_in_database(device_id)
-                        #print("***",access_message.hex())
                         sockfd.send(access_message)
 
                     elif(data[0:1].decode("utf-8")=="@"):
