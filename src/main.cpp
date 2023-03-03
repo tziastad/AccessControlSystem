@@ -127,7 +127,7 @@ void print_byte_array(char *array, int n)
 bool decryptMessage(char chipherText[], unsigned char aes_key[], int isCard)
 {
 
-  unsigned char allow[] = {0x30};
+  unsigned char allow[] = {0x31};
   mbedtls_aes_context aes;
   mbedtls_aes_init(&aes);
   mbedtls_aes_setkey_dec(&aes, aes_key, 256); // 32 bytes key
@@ -139,25 +139,31 @@ bool decryptMessage(char chipherText[], unsigned char aes_key[], int isCard)
   mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_DECRYPT, INPUT_LENGTH, iv, (const unsigned char *)chipherText, decrypt_output);
 
   mbedtls_aes_free(&aes);
+  printf("DECRYPT OUTPUT:");
+  print_array(decrypt_output,16);
+  printf("\r\n");
   printf("Server respones: ");
+  
 
   if (isCard)
   {
     if (decrypt_output[0] != allow[0])
+    {
+
+      printf("FAIL");
+      printf("\r\n");
+      turnOnRedLight();
+      ThisThread::sleep_for(2s);
+      return false;
+    }
+    else
     {
       printf("SUCCESS");
       printf("\r\n");
       turnOnGreenLight();
       ThisThread::sleep_for(2s);
       return true;
-    }
-    else
-    {
-      printf("FAIL");
-      printf("\r\n");
-      turnOnRedLight();
-      ThisThread::sleep_for(2s);
-      return false;
+      
     }
     ThisThread::sleep_for(1s);
   }
@@ -165,15 +171,19 @@ bool decryptMessage(char chipherText[], unsigned char aes_key[], int isCard)
   {
     if (decrypt_output[0] != allow[0])
     {
-      printf("KNOWN DEVICE ID");
+
+      printf("UNKNOWN DEVICE ID");
       printf("\r\n");
-      return true;
+      return false;
+      
     }
     else
     {
-      printf("UNKNOWN DEVICE ID");
-      return false;
+      printf("KNOWN DEVICE ID");
       printf("\r\n");
+      return true;
+
+      
     }
   }
 }
@@ -229,10 +239,10 @@ bool receiveResponseFromServer(TCPSocket *socket, int bufferLength, int isCard, 
   response_message.length = (sizeof rbuffer);
   response_message.payload = rbuffer;
 
-  // printf("recv \n");
-  //   for (int i = 0; i < 16; ++i) {
-  //       printf("%X ", rbuffer[i]);
-  //   }
+  printf("recv \n");
+    for (int i = 0; i < 16; ++i) {
+        printf("%X ", rbuffer[i]);
+    }
   printf("\r\n");
   return decryptMessage(rbuffer, aes_key, isCard);
 
@@ -485,7 +495,7 @@ int readNumber(TCPSocket *socket)
   }
 
   int number = (int)strtol(numberBuffer, NULL, 16);
-  printf("number is: %d",number);
+  printf("number is : %d\n",number);
   memset(bytesBuffer, 0, 4);
   memset(numberBuffer, 0, 9);
   return number;
@@ -625,6 +635,7 @@ int main(int argc, char **argv)
     printf("DIFFIE HELLMAN: %d \n",diffie_hellman );
 
     unsigned char aes_key[32];
+    size_t aes_key_size = sizeof aes_key / sizeof aes_key[0];
 
     if (diffie_hellman)
     {
@@ -663,6 +674,7 @@ int main(int argc, char **argv)
       printf("---SECRET NUMBER---:%d\n", sharedSecret);
       printf("\r\n");
       //unsigned char aesKey[32];
+      memset(aes_key, 0, aes_key_size); // clear the previous message
       putSecretToAesKey(aes_key, sharedSecret);
       for (int i = 0; i < 32; i++)
       {
@@ -695,7 +707,7 @@ int main(int argc, char **argv)
       //----------GENERATE AND ENCRYPT AES KEY--------------------
 
       
-      size_t aes_key_size = sizeof aes_key / sizeof aes_key[0];
+      
       char ecryptedAesKey[129];
       generateAndEncryptAesKey(aes_key, public_key, public_key_size, aes_key_size, ecryptedAesKey);
       printf("-------------------------------------- \n");
@@ -745,7 +757,7 @@ int main(int argc, char **argv)
 
       bool known_device=receiveResponseFromServer(&socket, 34, 0, aes_key);
       if(!known_device){
-        exit;
+        break;
       }
 
       //---------------SCAN TAGS-----------------------

@@ -18,7 +18,7 @@ from math import gcd
 
 
 # https://www.geeksforgeeks.org/find-the-number-of-primitive-roots-modulo-prime/
-def countPrimitiveRoots(p):
+def findPrimitiveRoot(p):
     result = 1
     for i in range(2, p, 1):
         if (gcd(i, p) == 1):
@@ -157,8 +157,8 @@ def main():
     RECV_BUFFER = 4096  # Advisable to keep it as an exponent of 2
     PORT = 8080
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(("0.0.0.0", PORT))
-    server.listen(1)
+    #server.bind(("0.0.0.0", PORT))
+    server.listen(2)
     # Add server socket to the list of readable connections
     socket_list.append(server)
     print("Chat server started on port:" + str(PORT))
@@ -172,6 +172,7 @@ def main():
             if s == server:
                 # Handle the case in which there is a new connection recieved through server_socket
                 sockfd, addr = server.accept()
+                print("SOCKET FD:", sockfd)
                 socket_list.append(sockfd)
                 print("Client (%s, %s) connected" % addr)
 
@@ -184,8 +185,7 @@ def main():
                     request = data[0:1].decode("utf-8")
 
                     if request == "*":
-                        print("message is:", data.decode("utf-8"))
-                        print("mpikaaa")
+                        print("message is:", data[0:1].decode("utf-8"))
                         print(key_exchange_method,type(key_exchange_method))
                         sockfd.send(numberAsBytes(key_exchange_method))
 
@@ -210,7 +210,7 @@ def main():
                         print("P is: ", P)
                         sockfd.send(numberAsBytes(P))
                     elif request == "G":
-                        G = countPrimitiveRoots(P - 1)
+                        G = findPrimitiveRoot(P - 1)
                         print("G is: ", G)
                         sockfd.send(numberAsBytes(G))
                     elif request == "&":
@@ -255,6 +255,8 @@ def main():
                         print(card_id[:8])
                         access_message = search_for_pair_in_database(device_id, card_id[0:8])
                         sockfd.send(access_message)
+                    else:
+                        sockfd.send(stringToBytes("SORRY"))
 
                 # client disconnected, so remove from socket list
                 except Exception:
