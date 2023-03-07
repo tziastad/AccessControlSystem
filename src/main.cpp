@@ -18,6 +18,7 @@
 #include <sys/time.h>
 
 #define FAIL_TO_RECEIVE_DIFF_HELLMAN_PARAM -1000
+#define DIFFIE_HELLMAN 1
 
 /* MESSAGE SYMBOLS MEANING
 ! --> CLIENT ASK FOR PUBLIC KEY
@@ -579,7 +580,7 @@ int bringUpEthernetConnection(TCPSocket *socket)
   (*socket).open(&net);
   // 192.168.2.17  192.168.1.3
 
-  net.gethostbyname("192.168.2.17", &socketAddr);
+  net.gethostbyname("192.168.1.2", &socketAddr);
   socketAddr.set_port(8080);
   (*socket).connect(socketAddr);
   return 0;
@@ -610,7 +611,7 @@ void putSecretToAesKey(unsigned char bytesBuffer[], int secret)
 
 int main(int argc, char **argv)
 {
-  TCPSocket socket;
+  //TCPSocket socket;
   turnOnBlueLight();
   int communication_failed = 0;
   
@@ -618,13 +619,17 @@ int main(int argc, char **argv)
   char device_id[16];
   findUniqueDeviceId(device_id);
   
-
+  int i=0;
 
   while (1)
   {
     printf("\r\n");
     printf("Door Lock System\n");
     printf("Connecting to server...\n");
+    TCPSocket socket; // it is must here
+    i=i+1;
+    printf("I is : %d \n",i);
+    
     
     // if connection fail try again
     if (bringUpEthernetConnection(&socket))
@@ -632,7 +637,9 @@ int main(int argc, char **argv)
       continue;
     }
     int diffie_hellman=askForKeyExchangeMethod(&socket);
+
     printf("DIFFIE HELLMAN: %d \n",diffie_hellman );
+    
 
     unsigned char aes_key[32];
     size_t aes_key_size = sizeof aes_key / sizeof aes_key[0];
@@ -656,6 +663,7 @@ int main(int argc, char **argv)
         printf("Could not retrieve Diff Hellman G parameter. Will retry to reconnect in 2s...\n");
         ThisThread::sleep_for(2s);
         continue;
+        
       }
 
       srand((unsigned int)**main + (unsigned int)&argc + (unsigned int)time(NULL));

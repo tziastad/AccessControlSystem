@@ -158,7 +158,7 @@ def main():
     PORT = 8080
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #server.bind(("0.0.0.0", PORT))
-    server.listen(2)
+    server.listen(1)
     # Add server socket to the list of readable connections
     socket_list.append(server)
     print("Chat server started on port:" + str(PORT))
